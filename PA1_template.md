@@ -1,5 +1,6 @@
 ---
 title: "Reproducible Research: Peer Assessment 1"
+author: Felix Lopez
 output: 
   html_document:
     keep_md: true
@@ -313,4 +314,4 @@ print(g)
 ```
 
 ![](PA1_template_files/figure-html/unnamed-chunk-14-1.png)<!-- -->
-
+It is over!! 
