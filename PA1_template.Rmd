@@ -11,7 +11,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ## Loading and preprocessing the data
 
-###Load the data 
+### Load the data 
 ````{r}
 library(tidyverse)
 activity <- read_csv("activity.csv")
@@ -20,7 +20,7 @@ dim(activity)
 str(activity)
 ```
 
-###Process/transform the data
+### Process/transform the data
 
 Transforming the variable 'date' to data format
 ```{r}
@@ -29,7 +29,7 @@ activity$date <- as.Date(activity$date, format = "%Y-%m-%d")
 
 ## What is mean total number of steps taken per day?
 
-###Calculate the total number of step taken per day
+### Calculate the total number of step taken per day
 ```{r}
 ts <- activity |> 
         group_by(date) |> 
@@ -39,7 +39,7 @@ print(ts, n=10)
 ```
 This is the total steps taken by day (ignoring missing)
 
-###Make a histogram of the total number of steps taken each day
+### Make a histogram of the total number of steps taken each day
 ```{r}
 ggplot(data=ts, aes(x=total_steps))+
         geom_histogram(bins = 10, color="sienna")+
@@ -54,9 +54,9 @@ summary(ts$total_steps, na.rm=TRUE)
 The average number of steps per day is 9,354
 The median number of steps per day is 10,395
 
-##What is the average daily activity pattern?
+## What is the average daily activity pattern?
 
-###Times series plot of th 5-minute interval and the average number of steps taken...
+### Times series plot of th 5-minute interval and the average number of steps taken...
 ```{r}
 avg_steps <- activity %>%
         group_by(interval) %>%
@@ -71,7 +71,7 @@ ggplot(avg_steps, aes(x = interval, y = avg_steps)) +
 ```
 
 
-###2. Which 5-minute interval contains the maximum number of steps?
+### Which 5-minute interval contains the maximum number of steps?
 ```{r}
 max_interval <- avg_steps %>%
         filter(avg_steps == max(avg_steps, na.rm = TRUE))
@@ -92,7 +92,7 @@ summary(is.na(actv))
 The total number of missing values in the dataset (rows with NAs) is 2,304.
 
 
-###Devise a strategy for filling in all the missing values in the dataset
+### Devise a strategy for filling in all the missing values in the dataset
 
 ```{r}
 actv1 <- filter(actv, !is.na(steps))
@@ -119,10 +119,31 @@ agg_step_new <- aggregate(filled_data$steps, by = list(filled_data$date), FUN = 
 hist(agg_step_new$x, col="sienna", main = "Histogram plot of Total Number Steps", xlab = "Total Steps")
 ```
 
-##Are the differences in activity patterns between weekdays and weekends
+## Are the differences in activity patterns between weekdays and weekends
 
+### Create a new factor variable dataset with two levels -- 'weekday' and 'weekend'
+```{r}
+# Adding column to hold the day of the week
+filled_data <- mutate(filled_data, day = weekdays(date))
+# Adding day category as 'weekend' and 'weekday'
+filled_data$day_catg <- if_else(filled_data$day %in% c("Sunday", "Saturday"), 'weekend', "weekday")
+filled_data$day_catg <- factor(filled_data$day_catg)
+str(filled_data)
+head(filled_data)
+```
 
-###Create a new factor variable dataset with two levels -- 'weekday' and 'weekend'
+### Make a panel plot containing a time series plot of 5-minute interval averaged across all weekdays and weekend
+```{r}
+avg_step_week <- aggregate(steps ~ interval + day_catg, data = filled_data, FUN = "mean")
+head(avg_step_week)
+```
 
-
-## Are there differences in activity patterns between weekdays and weekends?
+```{r}
+g <- ggplot(data = avg_step_week, aes(x = interval, y = steps))
+g <- g + facet_grid(day_catg ~ .)
+g <- g + geom_line()
+g <- g + labs(title = "Average Steps taken across weekday/weekend per Interval")
+g <- g + labs(x = "Interval", y = "Average Steps")
+print(g)
+```
+It is over!! 
