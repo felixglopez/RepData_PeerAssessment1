@@ -6,24 +6,30 @@ output:
 ---
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-````
+```
 
 
 ## Loading and preprocessing the data
+
+###Load the data 
 ````{r}
 library(tidyverse)
 activity <- read_csv("activity.csv")
 head(activity)
 dim(activity)
 str(activity)
+```
 
+###Process/transform the data
+
+Transforming the variable 'date' to data format
+```{r}
 activity$date <- as.Date(activity$date, format = "%Y-%m-%d")
 ```
 
-
 ## What is mean total number of steps taken per day?
-This is the total steps taken by day (ignoring missing)
 
+###Calculate the total number of step taken per day
 ```{r}
 ts <- activity |> 
         group_by(date) |> 
@@ -31,24 +37,92 @@ ts <- activity |>
 
 print(ts, n=10)
 ```
+This is the total steps taken by day (ignoring missing)
 
-###Histogram of the total number of steps taken each day
+###Make a histogram of the total number of steps taken each day
 ```{r}
-ggplot(data=ts, aes(x=total_steps))+geom_histogram(bins = 61)
+ggplot(data=ts, aes(x=total_steps))+
+        geom_histogram(bins = 10, color="sienna")+
+        labs(title = "Total Number of Steps Taken each day", x= "total steps", y="frequency")
 ```
-We see several days with 0 step.
 
 
-## What is the average daily activity pattern?
+### Calculate and report the mean and median of the total number of steps taken per day
 ```{r}
 summary(ts$total_steps, na.rm=TRUE)
 ```
 The average number of steps per day is 9,354
 The median number of steps per day is 10,395
 
+##What is the average daily activity pattern?
+
+###Times series plot of th 5-minute interval and the average number of steps taken...
+```{r}
+avg_steps <- activity %>%
+        group_by(interval) %>%
+        summarize(avg_steps = mean(steps, na.rm = TRUE))
+
+ggplot(avg_steps, aes(x = interval, y = avg_steps)) +
+                geom_line() +
+                labs(title = "Average Number of Steps per 5-Minute Interval",
+                x = "5-Minute Interval",
+                y = "Average Number of Steps")
+
+```
+
+
+###2. Which 5-minute interval contains the maximum number of steps?
+```{r}
+max_interval <- avg_steps %>%
+        filter(avg_steps == max(avg_steps, na.rm = TRUE))
+
+print(max_interval)
+```
+
+The maximum average steps (206) is in interval 835 as the above line graph also reveals.
+
 
 ## Imputing missing values
 
+### Calculate and report the total number of missing values in the dataset
+```{r}
+actv <- activity
+summary(is.na(actv))
+```
+The total number of missing values in the dataset (rows with NAs) is 2,304.
+
+
+###Devise a strategy for filling in all the missing values in the dataset
+
+```{r}
+actv1 <- filter(actv, !is.na(steps))
+actv0 <- filter(actv, is.na(steps))
+# Loop to fill NA steps with mean steps for the corresponding interval
+for (i in unique(actv0$interval)) {
+        actv0[actv0$interval == i, "steps"] <- avg_steps$avg_steps[avg_steps$interval == i]
+}
+```
+
+###Create a new dataset that is equal to the original dataset but with the missing data filled in.
+```{r}
+filled_data <- bind_rows(actv1, actv0) |> 
+        arrange(date, interval)
+# Print the result
+head(filled_data)
+```
+
+
+### Make a histogram of the total number of steps each day, the mean and median 
+
+```{r}
+agg_step_new <- aggregate(filled_data$steps, by = list(filled_data$date), FUN = "sum")
+hist(agg_step_new$x, col="sienna", main = "Histogram plot of Total Number Steps", xlab = "Total Steps")
+```
+
+##Are the differences in activity patterns between weekdays and weekends
+
+
+###Create a new factor variable dataset with two levels -- 'weekday' and 'weekend'
 
 
 ## Are there differences in activity patterns between weekdays and weekends?
