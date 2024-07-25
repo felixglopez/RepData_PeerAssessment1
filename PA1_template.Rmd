@@ -4,18 +4,47 @@ output:
   html_document:
     keep_md: true
 ---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+````
 
 
 ## Loading and preprocessing the data
+````{r}
+library(tidyverse)
+activity <- read_csv("activity.csv")
+head(activity)
+dim(activity)
+str(activity)
 
+activity$date <- as.Date(activity$date, format = "%Y-%m-%d")
+```
 
 
 ## What is mean total number of steps taken per day?
+This is the total steps taken by day (ignoring missing)
 
+```{r}
+ts <- activity |> 
+        group_by(date) |> 
+        summarize(total_steps = sum(steps, na.rm=TRUE))
+
+print(ts, n=10)
+```
+
+###Histogram of the total number of steps taken each day
+```{r}
+ggplot(data=ts, aes(x=total_steps))+geom_histogram(bins = 61)
+```
+We see several days with 0 step.
 
 
 ## What is the average daily activity pattern?
-
+```{r}
+summary(ts$total_steps, na.rm=TRUE)
+```
+The average number of steps per day is 9,354
+The median number of steps per day is 10,395
 
 
 ## Imputing missing values
